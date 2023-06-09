@@ -1,0 +1,97 @@
+---
+title: "P01"
+author: "Manish Shah"
+date: "2023-04-21"
+output: pdf_document
+geometry: "top=2cm"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+```
+
+```{r}
+library(pdftools)
+library(tm)
+library(wordcloud)
+library(graph)
+library(Rgraphviz)
+library(igraph)
+library(topicmodels)
+```
+
+***Setting working directory to MDS503P01***
+
+```{r}
+knitr::opts_knit$set(root.dir = "D:/R programming runs/Assisgnments/Project 1/MDS503P01")
+```
+
+## Getting all the pdf files using regex from working directory
+
+```{r}
+pdf_files <- list.files(pattern = "pdf$")
+```
+
+## Creating corpus with help of **tm** package
+
+```{r}
+pdf_corp <- Corpus(URISource(pdf_files), readerControl=list(reader = readPDF()))
+```
+
+## Removing punctuation, stopwords, & converting words to lowercase and then creating ***term document matrix***
+
+```{r}
+pdf_tdm <- TermDocumentMatrix(pdf_corp, control = list(removePunctuation=T, 
+                                                       stopwords=T, 
+                                                       tolower=T, 
+                                                       removeNumbers=T))
+inspect(pdf_tdm)
+```
+
+## Getting most frequent used words where the words will be repeated atleast 25 times
+
+```{r}
+pdf.freq <- findFreqTerms(pdf_tdm, lowfreq=25, highfreq=Inf)
+pdf.freq
+```
+
+\newpage
+
+## Plot word cloud without any colors
+
+We convert term-document matrix(sparse matrix) to regular matrix and then with help of ***wordcloud*** package, we create word cloud
+
+```{r}
+m <- as.matrix(pdf_tdm)
+freq <- sort(rowSums(m), decreasing=T)
+wordcloud(words=names(freq), freq=freq, min.freq=4, random.order=F)
+```
+
+\newpage
+
+## Plot word cloud with color
+
+```{r}
+my_colors <- sample(colors(), 10)
+wordcloud(words=names(freq), freq=freq, min.freq=4, random.order=F, colors = my_colors)
+
+```
+
+\newpage
+
+## Plot network graph from term-document matrix
+
+```{r}
+plot(pdf_tdm, terms=pdf.freq, corThreshold=0.8, weighting=T)
+```
+
+## Generating topic modeling using topicmodel package
+
+```{r}
+set.seed(16)
+myLda <- LDA(as.DocumentTermMatrix(pdf_tdm), k=5)
+terms(myLda, 10)
+```
+
+Here, k=5 denotes 5 topic & 10 in terms() denotes 10 terms in each of the 5 topics  
+We can observe that the 'social', 'media', 'marketing', 'online', 'network', etc. are most used terms in all of the topics.

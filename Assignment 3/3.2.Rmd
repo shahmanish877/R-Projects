@@ -1,0 +1,167 @@
+---
+title: "Assignment 3.2"
+author: "Manish Shah"
+date: "2023-05-08"
+output: html_document
+---
+```{r message=FALSE}
+library(tidyverse)
+library(igraph)
+```
+
+## 1. Load the attached "termDocMatrix.rdata" file in R/R studio
+```{r}
+load("D:\\R programming runs\\Assisgnments\\Assignment 3\\Manish Shah - termDocMatrix.rdata")
+```
+
+## 2. Check the structure of this data and comment on it carefully
+```{r}
+str(termDocMatrix)
+```
+It is a term document matrix with Terms as rows & Values(Docs) as columns where 0,1 & 2 values are stored
+
+## 3. Inspect the first 10 rows and first 10 columns of this data using sub-setting
+```{r}
+termDocMatrix[1:10, 1:10]
+```
+
+## 4. Convert the loaded termDocMatrix data to as matrix with appropriate R code
+```{r}
+term_matrix <- as.matrix(termDocMatrix)
+```
+
+## 5. Change this matrix to a Boolean matrix with same name (Hint: [termDocMatrix >=1] < 1)
+```{r}
+term_matrix[term_matrix >= 1] <- 1
+```
+
+## 6. Transform this matrix to a term-term adjacency matrix as termMatrix object (Hint: Use %*% and ## t(termDocMatrix)
+```{r}
+term_adj_matrix <- term_matrix %*% t(term_matrix)
+```
+
+## 7. Inspect the first 10 rows and first 10 columns of this matrix using sub-setting
+```{r}
+term_adj_matrix[1:10, 1:10]
+```
+
+## 8. Define a graph object g of termMatrix using graph.adjacency function of "igraph" package with weighted=T ## and mode="undirected" arguments in the function
+```{r}
+g <- graph.adjacency(term_adj_matrix, mode = "undirected", weighted = T)
+```
+
+## 9. Remove loops of g using simplify function
+```{r}
+g <- simplify(g, remove.multiple = TRUE, remove.loops = TRUE)
+```
+
+## 10. Set vertices labels with names of g
+```{r}
+V(g)$label <- V(g)$name
+```
+
+## 11. Set degree with degree of g
+```{r}
+V(g)$degree <- degree(g)
+```
+
+## 12. Find degree of g for 'all", "in" and "out" modes and interpret them carefully
+```{r}
+degree_all <- degree(g, mode = "all")
+degree_all
+
+degree(g, mode = "in")
+degree(g, mode = "out")
+```
+Degree means the arrow in & out from a node.
+From all degree we can observe that all terms has degree > 5 where the minimum degree is of **applications** i.e. 6 and maximum degree is of **mining** i.e. 20.  
+Similarly, degree-in means the number of arrows pointing towards it whereas degree-out means the number of arrows pointing from it.  
+The degree is same for all modes because it is ***undirected.***
+
+## 13. Find diameter of g and interpret it carefully
+```{r}
+diameter(g)
+```
+The diameter means the longest shortest path between any two nodes. So, in this graph we have diameter of 5.
+
+
+## 14. Find edge density of g and interpret it carefully
+```{r}
+edge_density(g)
+```
+Edge density means the numbers of edges connected to nodes in graph from a node. Here 0.6190476 or 61.90% of nodes have edge connected to other nodes.
+
+## 15. Find reciprocity of g and interpret it carefully
+```{r}
+reciprocity(g)
+```
+Reciprocity 1 means all edges in network are reciprocated.
+Reciprocated means if two node is connected to each other. Since the graph is undirected so all node are connected to each other, hence reciprocity is 1.
+
+## 16. Find closeness of g and interpret it carefully
+```{r}
+closeness(g)
+```
+Closeness means average length of edge from a node to all other nodes. From above, we can observe closeness of all terms is less than 0.01.
+
+## 17. Find betweenness of g and interpret it carefully
+```{r}
+betweenness(g)
+```
+Betweenness means how many times a node lies between shortest path of two nodes.
+
+## 18. Plot histogram of node degree and interpret it carefully
+```{r}
+hist(degree_all, main = "Node Degree Histogram", xlab = "Node Degree")
+```
+
+The node degree ranges from 6 to 20 where 6-8 & 10-12 has high degree to vertex & 18-20 is lowest i.e. 1 vertex.
+
+## 19. Set seed as per your class roll number
+```{r}
+set.seed(16)
+```
+
+## 20. plot g with vertex.size of degree*0.4 and interpret it carefully
+```{r}
+plot(g, vertex.size = degree_all*0.4, main="Twitter Network Graph")
+```
+
+From the graph, we can observe that highest degree nodes are in center i.e. ***mining, data, tutorial, analysis, etc*** have high degree.
+
+## 21. plot g with fruchterman.reingold layout and interpret it carefully
+```{r}
+plot(g, layout=layout.fruchterman.reingold, main="Graph with Fruchterman Reingold Layout")
+```
+
+In this graph also we can observe nodes with high degree are in center & lowest are outside.
+
+## 22. plot g with kamada.kawai layout and interpret it carefully
+```{r}
+plot(g, layout=layout.kamada.kawai)
+```
+
+## 23. plot hub and authority of g and interpret them carefully
+```{r}
+par(mfrow=c(1,2))
+hub <- hub_score(g)
+authority <- authority.score(g)
+
+plot(hub$vector)
+plot(authority$vector)
+par(mfrow=c(1,1))
+
+```
+Hubs are the outgoing edges & authorities are the incoming egdes. Since the graph is undirected, so the plot is same.
+
+## 24. Plot community cluster of g and interpret it carefully
+Detect communities & then plot
+```{r}
+fc <- cluster_fast_greedy(g)
+plot(fc, g, vertex.color = fc$membership, main = 'Community Detection')
+```
+
+Here, we  can observe there are 3 communities where ***mining, data*** are overlapped i.e. they belong to two groups.
+
+## 25. Write a summary of SNA for the twitter data
+Each nodes are the terms & each edges connected to nodes means the terms are occurred frequently simultaneously. The most used terms in given termdocumentmatrix is ***data*** & ***mining***.
